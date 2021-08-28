@@ -8,94 +8,60 @@
 
 import SwiftUI
 
-struct FocusBorder: View {
-    private var isFocused = false
-    
-    init(_ isFocused: Bool) {
-        self.isFocused = isFocused
-    }
-    
-    var body: some View {
-        RoundedRectangle(cornerRadius: .SBCornerRadius())
-            .stroke(isFocused ? Color.SBPrimaryBlue() : Color.clear, lineWidth: 1)
-            .foregroundColor(.clear)
-    }
-}
-
 struct LoginView: View {
-    private let viewModel: LoginViewModel
-    
-    @State private var emailTextField = ""
-    @State private var passwordTextField = ""
-    @State private var emailTextFieldFocused = false
-    @State private var passwordTextFieldFocused = false
-    @State private var buttonTapped = false
-    @State private var loginButtonDisabled = true
-    @State private var isActive = false
+    @ObservedObject private var viewModel: LoginViewModel
+    private typealias Colors = DesignSystem.Foundation.Colors
+    private typealias Elements = DesignSystem.Elements
     
     init(viewModel: LoginViewModel) {
         self.viewModel = viewModel
     }
-        
+    
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 24) {
-                
+            VStack(alignment: .leading, spacing: 32) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text.SBTitle("Welcome back")
-                    Text.SBSubtitle("Log in to your Student Beans account")
+                    Elements.Texts.title("Welcome back")
+                        .padding(.top, 50)
+                        .navigationBarHidden(true)
+                    Elements.Texts.subtitle("Log in to your Student Beans account")
                 }
                 
                 VStack(spacing: 16) {
-                    TextField(
-                        "Email",
-                        text: $emailTextField,
+                    Elements.TextFields.standard(
+                        placeholder: "Email",
+                        text: $viewModel.emailTextField,
+                        isFocused: viewModel.isEmailFocused,
                         onEditingChanged: { isEditing in
-                            emailTextFieldFocused = isEditing
-                            passwordTextFieldFocused = !isEditing
+                            viewModel.isEmailFocused = isEditing
+                            viewModel.isPasswordFocused = !isEditing
                         }
                     )
-                    .textFieldStyle(SBTextFieldStyle())
-                    .overlay(FocusBorder(emailTextFieldFocused))
                     
                     VStack(alignment: .leading) {
-                        SecureField(
-                            "Password",
-                            text: $passwordTextField,
-                            onCommit: { passwordTextFieldFocused = false }
+                        Elements.TextFields.secure(
+                            placeholder: "Password",
+                            text: $viewModel.passwordTextField,
+                            isFocused: viewModel.isPasswordFocused,
+                            onCommit: { viewModel.isPasswordFocused = false },
+                            onTap: { viewModel.isPasswordFocused = true }
                         )
-                        .textFieldStyle(SBTextFieldStyle())
-                        .onTapGesture {
-                            passwordTextFieldFocused = true
-                        }
-                        .overlay(FocusBorder(passwordTextFieldFocused))
                         
-                        if !viewModel.isValidPassword(passwordTextField) {
-                            Text("Your password must be at least 8 characters")
-                                .foregroundColor(.red)
-                                .font(.caption)
+                        if viewModel.shouldShowPasswordError {
+                            Elements.Texts.errorCaption("Your password must be at least 8 characters")
                         }
                     }
-                    
                 }
                 
                 Spacer()
                 
-                NavigationLink(
-                    destination: PhotosView(),
-                    isActive: $isActive,
-                    label: {
-                        Text("Log in")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(viewModel.isValidCredentials(emailTextField, passwordTextField) ? Color.SBPrimaryBlue(): Color.SBLightGray())
-                            .foregroundColor(Color.white)
-                            .cornerRadius(.SBCornerRadius())
-                            
-                    })
-                    .disabled(!viewModel.isValidCredentials(emailTextField, passwordTextField))
-                    
-            
+                Elements.Buttons.primaryNavigationLink(
+                    title: "Log in",
+                    destination: PhotosView(viewModel: .init()),
+                    isDestinationActive: $viewModel.isActive,
+                    isEnabled: viewModel.isValidCredentials
+                )
+                                
             }.padding(.all, 24)
         }
     }

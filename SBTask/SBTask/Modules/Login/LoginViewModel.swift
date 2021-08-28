@@ -8,18 +8,44 @@
 
 import Foundation
 
-struct LoginViewModel {
+class LoginViewModel: ObservableObject {
+    @Published var emailTextField = "" {
+        didSet {
+            loginButtonEnabled = isValidCredentials
+        }
+    }
+    @Published var loginButtonEnabled = false
+    @Published var passwordTextField = "" {
+        didSet {
+            loginButtonEnabled = isValidCredentials
+        }
+    }
+    @Published var isActive = false
+    @Published var isEmailFocused = false
+    @Published var isPasswordFocused = false {
+        didSet {
+            if isPasswordFocused {
+                passwordDidEdit = true
+            }
+        }
+    }
+    
     private let validator: Validator
+    private var passwordDidEdit = false
+    
+    var isValidCredentials: Bool {
+        validator.loginCredentials(emailTextField, passwordTextField)
+    }
+    
+    var isValidPassword: Bool {
+        validator.password(passwordTextField)
+    }
+    
+    var shouldShowPasswordError: Bool {
+        passwordDidEdit && !isValidPassword
+    }
     
     init(validator: Validator = .init()) {
         self.validator = validator
-    }
-    
-    func isValidCredentials(_ email: String, _ password: String) -> Bool {
-        validator.loginCredentials(email, password)
-    }
-    
-    func isValidPassword(_ password: String) -> Bool {
-        validator.password(password)
     }
 }
