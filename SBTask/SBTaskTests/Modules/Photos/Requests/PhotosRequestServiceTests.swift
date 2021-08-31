@@ -17,33 +17,49 @@ class PhotosRequestServiceTests: XCTestCase {
         cancellables = []
     }
     
-    func restFetchWhenResponseIsErrorThenReturnEmptyArray() throws {
+    func testFetchWhenResponseIsErrorThenReturnErrorAndReceiveValueShouldBeNil() throws {
         let apiProvider = MockAPIProvider(data: nil, error: .badServerResponse)
         let service = PhotosRequestService(apiProvider: apiProvider)
-        var photos = [Photo]()
+        var photos: [Photo]?
+        var error: Error?
         
-        service.fetch()
-            .sink { results in
-                photos = results
+        service.fetch().sink { completion in
+            switch completion {
+            case .finished:
+            break
+            case let .failure(serviceError):
+                error = serviceError
             }
-            .store(in: &cancellables)
+        } receiveValue: { value in
+            photos = value
+        }
+        .store(in: &cancellables)
         
-        XCTAssertEqual(photos, [])
+        XCTAssertNotNil(error)
+        XCTAssertNil(photos)
     }
     
-    func testFetchWhenResponseIsSuccessThenReturnPhotos() throws {
+    func testFetchWhenResponseIsSuccessThenReturnPhotosAndErrorShouldBeNil() throws {
         let expected = try! JSONDecoder().decode([Photo].self, from: MockData().photos)
-        
+
         let apiProvider = MockAPIProvider(data: MockData().photos, error: nil)
         let service = PhotosRequestService(apiProvider: apiProvider)
-        var photos = [Photo]()
-        
-        service.fetch()
-            .sink { results in
-                photos = results
+        var photos: [Photo]?
+        var error: Error?
+
+        service.fetch().sink { completion in
+            switch completion {
+            case .finished:
+            break
+            case let .failure(serviceError):
+                error = serviceError
             }
-            .store(in: &cancellables)
-        
+        } receiveValue: { value in
+            photos = value
+        }
+        .store(in: &cancellables)
+
         XCTAssertEqual(photos, expected)
+        XCTAssertNil(error)
     }
 }

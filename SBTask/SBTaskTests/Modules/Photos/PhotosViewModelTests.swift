@@ -12,16 +12,16 @@ import Combine
 
 class PhotosViewModelTests: XCTestCase {
     var cancellables: Set<AnyCancellable>!
-    var photos: [Photo] = [Photo]()
+    var state: PhotosViewModel.State!
     
     override func setUp() {
         cancellables = []
-        photos = []
+        state = nil
     }
     
-    func testWhenInitialisedThenPhotosShouldBeEmpty() throws {
+    func testWhenInitialisedThenDefaultStateShouldBeLoading() throws {
         let viewModel = makeSubject(data: nil)
-        XCTAssertEqual(viewModel.photos, [])
+        XCTAssertEqual(viewModel.state, .loading)
     }
         
     func testWhenFetchPhotosWithSuccessResponseThenShouldSetPhotosWithResult() throws {
@@ -32,12 +32,12 @@ class PhotosViewModelTests: XCTestCase {
         viewModel.fetchPhotos()
         
         subscribeAndFulfill(viewModel: viewModel, expectation: expectation)
-                        
+        
         waitForExpectations(timeout: 5)
-        XCTAssertEqual(photos, expected)
+        XCTAssertEqual(state, .loaded(photos: expected))
     }
     
-    func testWhenFetchPhotosWithFailureResponseThenPhotosShouldBeEmpty() throws {
+    func testWhenFetchPhotosWithFailureResponseThenSetStateError() throws {
         let viewModel = makeSubject(data: nil)
         let expectation = self.expectation(description: "Awaiting publisher")
         
@@ -46,12 +46,12 @@ class PhotosViewModelTests: XCTestCase {
         subscribeAndFulfill(viewModel: viewModel, expectation: expectation)
         
         waitForExpectations(timeout: 5)
-        XCTAssertEqual(photos, [])
+        XCTAssertEqual(viewModel.state, .error)
     }
     
     private func subscribeAndFulfill(viewModel: PhotosViewModel, expectation: XCTestExpectation) {
-        viewModel.$photos.dropFirst().sink { [weak self] value in
-            self?.photos = value
+        viewModel.$state.dropFirst().sink { [weak self] value in
+            self?.state = value
             expectation.fulfill()
         }
         .store(in: &cancellables)

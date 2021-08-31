@@ -17,11 +17,10 @@ class PhotosRequestService {
         self.apiProvider = apiProvider
     }
     
-    func fetch() -> AnyPublisher<[Photo], Never> {
+    func fetch() -> AnyPublisher<[Photo], Error> {
         apiProvider.apiResponse(for: URLRequest(url: url))
             .map { $0.data }
             .decode(type: [Photo].self, decoder: JSONDecoder())
-            .replaceError(with: [])
             .eraseToAnyPublisher()
     }
 }

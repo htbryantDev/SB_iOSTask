@@ -18,27 +18,35 @@ struct PhotosView: View {
     }
     
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 8) {
-                ForEach(viewModel.photos, id: \.self) {
-                    DesignSystem.Patterns.PhotoRows.standard(photo: $0)
+        switch viewModel.state {
+        case .loading:
+            LoadingView()
+                .modifier(makeNavigationBarModifier())
+                .onAppear {
+                    viewModel.fetchPhotos()
+                }
+            
+        case let .loaded(photos):
+            ScrollView {
+                LazyVStack(spacing: 8) {
+                    ForEach(photos, id: \.self) {
+                        DesignSystem.Patterns.PhotoRows.standard(photo: $0)
+                    }
                 }
             }
+            .modifier(makeNavigationBarModifier())
+            
+        case .error: ErrorView()
+            .modifier(makeNavigationBarModifier())
         }
-        .padding(.horizontal, 16)
-        .navigationTitle("Photos")
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .navigationBarItems(
-            leading: Button(action: {
-                self.presentationMode.wrappedValue.dismiss()
-            }) {
-                Image(systemName: "chevron.backward")
-                    .foregroundColor(.black)
-            })
-        .onAppear {
-            viewModel.fetchPhotos()
-        }
+    }
+}
+
+extension PhotosView {
+    private func makeNavigationBarModifier() -> DesignSystem.ViewModifiers.NavigationBarModifier {
+        return .init(title: "Photos", backButtonAction: {
+            self.presentationMode.wrappedValue.dismiss()
+        })
     }
 }
 

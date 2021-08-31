@@ -20,6 +20,33 @@ struct DesignSystem {
         struct PhotoRows {}
     }
     
+    struct ViewModifiers {
+        struct NavigationBarModifier: ViewModifier {
+            typealias Action = () -> Void
+            private let backButtonAction: Action
+            private let title: String
+            
+            init(title: String, backButtonAction: @escaping Action) {
+                self.title = title
+                self.backButtonAction = backButtonAction
+            }
+            
+            func body(content: Content) -> some View {
+                content
+                    .padding(.horizontal, 16)
+                    .navigationTitle(title)
+                    .navigationBarTitleDisplayMode(.inline)
+                    .navigationBarBackButtonHidden(true)
+                    .navigationBarItems(
+                        leading: Button(action: backButtonAction) {
+                            Image(systemName: "chevron.backward")
+                                .foregroundColor(.black)
+                        }
+                    )
+            }
+        }
+    }
+    
     struct Styles {
         struct TextFields {
             struct standard: TextFieldStyle {
